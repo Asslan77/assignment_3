@@ -24,8 +24,3 @@ python src/build_results_section.py
 
 The analysis uses a CPU and overwrites derived results. The recorded run took about six minutes. Exact versions and hardware are in `environment.json`; another platform may need a compatible PyTorch installation.
 
-## Build and publish
-
-```bash
-python src/set_repository_url.py https://github.com/YOUR_USERNAME/YOUR_REPOSITORY
-```
