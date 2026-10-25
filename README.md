@@ -9,7 +9,6 @@
 - `src/`: generation, analysis, plotting and verification scripts.
 - `results/`: predictions, metrics, figures and execution details.
 - `results_pipeline.ipynb`: notebook for inspecting and reproducing the run.
-- `source_materials/`: original assignment files and their hashes.
 
 ## Run
 
