@@ -1,0 +1,18 @@
+{
+  "rows_before": 153300,
+  "duplicate_slots": 0,
+  "invalid_prices": 0,
+  "missing_cells": 0,
+  "rows_after": 153300,
+  "venues": 14,
+  "start": "2024-09-01 08:00:00",
+  "end": "2026-08-31 22:00:00",
+  "train_n": 122640,
+  "test_n": 30660,
+  "train_booked": 31888,
+  "test_booked": 9988,
+  "train_rate": 0.2600130463144162,
+  "test_rate": 0.32576647097195044,
+  "test_start": "2026-04-08 08:00:00",
+  "source_sha256": "fc17c31a84abf57ab320e560b5244cdf7574cdf30e0e12c9c54343ec70b8f05a"
+}

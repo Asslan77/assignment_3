@@ -1,0 +1,79 @@
+Loading and auditing the supplied dataset
+Tuning Logistic on four chronological folds
+Logistic best CV log-loss 0.5329176562352161
+Tuning LightGBM on four chronological folds
+LightGBM best CV log-loss 0.5030818284470943
+Tuning LSTM on four chronological folds
+LSTM best CV log-loss 0.5136954419897184
+Selected by validation: LightGBM
+Final five-seed fits: Logistic
+Final five-seed fits: LightGBM
+Final five-seed fits: LSTM
+Fitting SARIMAX baselines with training AIC selection
+SARIMAX venue 0 complete
+SARIMAX venue 1 complete
+SARIMAX venue 2 complete
+SARIMAX venue 3 complete
+SARIMAX venue 4 complete
+SARIMAX venue 5 complete
+SARIMAX venue 6 complete
+SARIMAX venue 7 complete
+SARIMAX venue 8 complete
+SARIMAX venue 9 complete
+SARIMAX venue 10 complete
+SARIMAX venue 11 complete
+SARIMAX venue 12 complete
+SARIMAX venue 13 complete
+Forecast uncertainty and paired tests
+Past-only cross-fitting for elasticity
+Reference-price demand, cancellations and policy evaluation
+Weather ablation
+{
+  "selected": "LightGBM",
+  "slope_ci": [
+    1.001889479235709,
+    1.0767711029232947
+  ],
+  "n_test_blocks": 308,
+  "calibration_factor": 1.0341178881415192,
+  "historical_revenue_diagnostic": 0.9882480318015805,
+  "historical_demand_rate": 0.3237718093117666,
+  "recommended_rate": 0.32939478268064515,
+  "mean_price_ratio": 1.0358199105800319,
+  "changed_share": 0.9756686236138291,
+  "cancellation_margin_pp": 0.7535423914514823,
+  "truth_effects": [
+    1.146234036640803,
+    -0.5568956304314086,
+    -0.9234842672647637,
+    -0.9417804837920665
+  ],
+  "positive_theta": 5,
+  "elasticity_coverage": 0.90625,
+  "theta_mae": 0.16471503530897827,
+  "naive_mae": 0.3125225326418066,
+  "residual_share_min": 0.8121041784136535,
+  "residual_share_max": 0.8673711863875753,
+  "n_used_segments": 32,
+  "crossfit_records": 98070,
+  "h1": false,
+  "h2": true,
+  "h3": false,
+  "runtime_seconds": 361.6625416278839,
+  "python": "3.12.14",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "cpu_count": 9,
+  "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+  "versions": {
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "sklearn": "1.8.0",
+    "scipy": "1.17.0",
+    "lightgbm": "4.7.0",
+    "optuna": "5.0.0",
+    "torch": "2.14.1+cpu",
+    "statsmodels": "0.15.0"
+  },
+  "sarimax_converged": 14
+}
+Analysis finished

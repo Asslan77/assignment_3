@@ -1,0 +1,18 @@
+{
+  "Logistic": {
+    "C": 0.0010267561169708258
+  },
+  "LightGBM": {
+    "n_estimators": 240,
+    "learning_rate": 0.0682380350618697,
+    "num_leaves": 7,
+    "min_child_samples": 80,
+    "reg_lambda": 1.037663549657919
+  },
+  "LSTM": {
+    "hidden": 24,
+    "lr": 0.005971262718430533,
+    "weight_decay": 6.711588300331207e-05,
+    "epochs": 8
+  }
+}

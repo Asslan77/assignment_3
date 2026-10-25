@@ -1,0 +1,26 @@
+\documentclass[journal]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,booktabs,array,graphicx,url,cite}
+\usepackage[hidelinks]{hyperref}
+\usepackage{placeins,balance}
+\graphicspath{{../results/figures/}}
+\newcommand{\R}{\mathbb{R}}
+\hyphenation{LightGBM SARIMAX}
+\begin{document}
+\title{Dynamic Pricing and Demand Forecasting for Sports Facility Aggregators}
+\author{Kuandyk Bibarys and Tulebay Aslan\\Astana IT University, Astana, Kazakhstan}
+\maketitle
+\begin{abstract}
+This study evaluates a forecasting and pricing pipeline for bookable sports facilities using a reproducible synthetic dataset. The data contain 153,300 hourly slots across 14 simulated venues over 730 days. Chronological validation selects a forecasting model, and the final 146 days are held out for evaluation. Logistic regression, LightGBM, an LSTM and a SARIMAX baseline are compared with historical booking climatology. A separately estimated price-response layer supports constrained profit optimization. Revenue, utilization and cancellations are evaluated under common counterfactual assumptions and checked against the simulator's known mechanism. All results are preliminary simulation measurements. They do not establish real-world price elasticity, customer behaviour or commercial performance.
+\end{abstract}
+\begin{IEEEkeywords}
+dynamic pricing, demand forecasting, sports facilities, synthetic data, simulation, booking probability
+\end{IEEEkeywords}
+\input{background}
+\input{methods}
+\input{results}
+\balance
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}

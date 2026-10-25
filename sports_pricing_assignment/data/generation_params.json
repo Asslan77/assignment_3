@@ -1,0 +1,12 @@
+{
+ "seed": 2026,
+ "n_days": 730,
+ "n_venues": 14,
+ "beta_type": {
+  "futsal": -2.0,
+  "football": -1.6,
+  "tennis": -1.3,
+  "swimming": -0.9
+ },
+ "note": "SYNTHETIC simulation, not real aggregator data"
+}

@@ -1,0 +1,69 @@
+\section{Methods and materials}
+\label{sec:methods}
+\subsection{Study design and status}
+The study uses a quantitative, two-stage design. Stage 1 estimates booking probability from slot characteristics. Stage 2 applies an estimated price-response function and chooses a price within stated constraints. This separates forecast evaluation from the counterfactual assumptions needed for pricing. The design follows the original proposal's distinction between forecasting, price sensitivity and owner control \cite{r11,r12,r15}.
+
+The original plan described approximately 150,000 real bookings joined to a complete slot inventory, weather forecasts available at the decision time, and a data-sharing agreement with an aggregator. The supplied materials do not contain real aggregator records, a signed agreement or an ethics approval reference. The present implementation therefore uses the supplied simulator and reports a preliminary simulation study. No claim is made that a real-data agreement was refused or that real customer observations were collected. Real-data validation, privacy review and any required institutional approval remain future work. The planned external weather sources were Open-Meteo and ERA5 \cite{m18,m19}; neither source was downloaded or used in these experiments.
+
+\subsection{Simulation data and preprocessing}
+The generator creates 14 venues, 730 days and 15 hourly slots per venue-day, from 08:00 through 22:00. Facility types are futsal, football, tennis and swimming. Each row represents an offered slot, including unbooked capacity. The binary target is whether a booking occurred; cancellations are stored separately and do not change that target. Venue identifiers are synthetic, and the dataset contains no customer identifiers.
+
+Booking probability is generated from a logistic mechanism with facility type, venue popularity, peak hours, weekday, simulated weather, calendar indicators, lead time and relative price. The price rule includes predictable peak and weekend components and random variation. The simulator sets different price-response coefficients by facility type and peak status. Cancellation probability depends on relative price and lead time. Weather fields are noisy simulated forecasts, and holiday and examination flags are synthetic indicators rather than verified observations from official calendars. The seed is 2026. The hidden booking intercept and price coefficient are written to a separate file and used only after fitting to check the simulated counterfactuals.
+
+Cleaning removes duplicate venue--time keys and nonpositive or missing prices. The code reports both the number flagged and the number actually removed before constructing the analysis splits. Hour, weekday and month are encoded using sine and cosine terms. Lead times are grouped into less than 3 hours, 3--24 hours, 1--7 days and more than 7 days. Relative price is $r=p/p_{\mathrm{ref}}$, where $p_{\mathrm{ref}}$ is the venue reference price; its logarithm is the price feature. Forecasting uses weather, calendar, lead time, venue type and venue identity. Category vocabularies and scaling parameters are learned from training data.
+
+The logistic, LightGBM and LSTM candidates receive the same covariates for the current slot and the previous three offered slots at that venue. The first observations are padded with current-slot covariates. These windows contain no booking outcomes or cancellation labels. Flattened windows are used by logistic regression and LightGBM; the LSTM receives the corresponding four-step sequence. This is a short contextual sequence experiment, not a test of long-range temporal memory. The simulation assumes that these published-slot covariates are available when a decision is made; the supplied dataset does not contain forecast issue timestamps with which to audit that assumption on real data.
+
+\subsection{Temporal validation and candidate models}
+The final 20\% of the timeline is held out for testing. Four expanding-window folds partition the earlier period, with a seven-day gap between each fold's training endpoint and validation start. The final models use all pre-test observations. No additional seven-day gap is imposed at the final test boundary; the feature windows contain no lagged outcomes. This distinction is retained in the recorded split metadata. Chronological validation follows the proposal's time-series evaluation strategy \cite{m25}.
+
+Logistic regression uses standardized covariates and an $L_2$ penalty. LightGBM uses a non-increasing constraint on the current log-price feature \cite{m27}. The LSTM has one recurrent layer and a sigmoid probability output, trained with binary cross-entropy and Adam. Both learned nonlinear models are repeated with seeds 0--4. Logistic regression is deterministic for this implementation and is fitted once after tuning. Model selection minimizes mean validation log-loss, before test metrics are computed. Final probabilistic comparisons use the average prediction across the five seeds; individual-seed metrics are also retained.
+
+Optuna's TPE sampler uses seed 2026 \cite{m30}. The pilot budget is eight trials per candidate, each evaluated on all four folds. Logistic regression tunes regularization strength. LightGBM tunes tree count, learning rate, leaf count, minimum leaf size and regularization. The LSTM tunes hidden width, learning rate, weight decay and a fixed budget of five or eight epochs. This replaces the proposed 100 trials and early stopping with a smaller, equal trial count on the available CPU. Equal trial counts do not imply equal computation. No Temporal Fusion Transformer is fitted; the recurrent model is the neural alternative in this pilot \cite{m28}.
+
+Two additional baselines are evaluated. Climatology is the training booking rate for each venue, hour and weekday, with the overall training mean as a fallback. SARIMAX is fitted separately to each venue's hourly occupancy sequence with weather, calendar, lead-time and price regressors. A daily seasonal autoregressive term uses the 15 offered slots per day. Training AIC selects between nonseasonal orders $(0,0,0)$ and $(1,0,0)$. The fitting limit is 60 optimizer iterations, and convergence flags are retained. Forecasts cover the complete test horizon without assimilating test labels, and are clipped to $[10^{-6},1-10^{-6}]$ for probability scoring. SARIMAX is an AIC-selected benchmark, rather than a candidate selected by the same validation log-loss search.
+
+\subsection{Price response and counterfactual demand}
+Historical prices can be correlated with the demand conditions used to choose them. The proposed identification step estimates the partially linear relation
+\begin{equation}
+ y=\theta(z)\ln r+g(x)+\epsilon,\qquad \ln r=m(x)+v.
+\end{equation}
+The segment $z$ combines facility type, lead-time bin and peak status. LightGBM nuisance regressors estimate $g$ and $m$ using past-only expanding folds with the same seven-day gaps. The initial block supplies training history and contributes no cross-fitted residuals. Segment coefficients are estimated from residualized outcomes and prices, with venue-week clustered standard errors. This applies the orthogonalization idea described in the original Methods \cite{m20}. A segment is eligible for pricing when it has at least 500 residual observations and a residual-to-observed log-price variance ratio of at least 0.05.
+
+The response exponent is $\widehat\varepsilon(z)=\widehat\theta(z)/\overline y(z)$. Because the generator's probability function is logistic, this constant-exponent layer is an approximation. Its coefficients are compared with the simulator's average local probability derivative as a diagnostic; agreement with that derivative is not an exact coverage test for the partially linear projection parameter. Naive coefficients from unadjusted regressions are recorded on the same residual-estimation sample.
+
+The selected price-aware predictor is evaluated with current relative price set to one, while other covariates are held fixed, to obtain $\widehat D_0(x)$. Demand at an alternative price is
+\begin{equation}
+ \widehat D(p,x)=\min\{1,s\widehat D_0(x)(p/p_{\mathrm{ref}})^{\widehat\varepsilon(z)}\}.
+\end{equation}
+The scalar $s$ is chosen using training observations only so that modeled revenue at historical prices equals observed training revenue. Test-period agreement is reported separately. Setting current price explicitly avoids treating a price-omitting predictor as a reference-price counterfactual.
+
+\subsection{Optimization and operational outcomes}
+Cancellation probability $q(p,x)$ is estimated with a separate LightGBM classifier on booked training slots. The objective is
+\begin{equation}
+ p^*=\arg\max_{p\in\mathcal P}\{p-c-\phi q(p,x)\}\widehat D(p,x).
+\end{equation}
+For this simulation, $c=0.30p_{\mathrm{ref}}$, $\phi=0.50p_{\mathrm{ref}}$, and owner bounds are $0.70p_{\mathrm{ref}}$ to $1.30p_{\mathrm{ref}}$. These are simulator-analysis assumptions, not costs supplied by an aggregator. A grid uses steps of $0.01p_{\mathrm{ref}}$ within both the owner bounds and each segment's training 2.5th--97.5th percentile price support. The historical price is included as a no-change option, even if it falls outside the trimmed support. Cancellation probability is recomputed at every candidate price. Ineligible segments retain their historical price.
+
+Revenue is gross booking revenue, $R(\pi)=\sum_t\pi_t\widehat D(\pi_t,x_t)$, and its relative change is
+\begin{equation}
+ \Delta R=100\{R(p^*)/R(p_0)-1\}.
+\end{equation}
+Both policies are evaluated under the same demand model. Revenue is distinct from the cancellation-adjusted profit used for optimization. Utilization is expected booked slots divided by offered slots. Off-peak occupancy uses weekdays from 10:00 up to, but not including, 16:00. The cancellation rate is expected cancellations divided by expected bookings. Changes in utilization and cancellation rates are expressed in percentage points. The fixed off-peak window is retained from the proposal, but its status as the lowest-occupancy window is not assumed.
+
+\subsection{Metrics, uncertainty and success criteria}
+The main probability scores are Brier score and log-loss \cite{m21,m22}:
+\begin{align}
+ \mathrm{Brier}&=N^{-1}\sum_t(y_t-\widehat p_t)^2,\\
+ \mathrm{LogLoss}&=-N^{-1}\sum_t[y_t\ln\widehat p_t+(1-y_t)\ln(1-\widehat p_t)].
+\end{align}
+Additional measures are ROC-AUC, expected calibration error in ten equal-width bins, calibration slope and intercept, and Brier skill relative to climatology. Calibration is assessed without using test labels to alter predictions \cite{m24}. Predicted probabilities are summed by venue-day for mean absolute error in bookings per day and WAPE, reported as a percentage. Slot-level MAPE is omitted because the target includes zeros \cite{m23}.
+
+Forecast intervals use 2,000 venue-week block bootstrap replicates. Paired loss differences use the same resampled blocks. Two-sided bootstrap tests center the bootstrap distribution at its observed difference and apply a finite-replicate correction; Holm correction covers the eight primary comparisons against the selected model. This is the paired block-bootstrap option in the proposal, not a Diebold--Mariano test \cite{m26}. The selected model's calibration slope uses 300 block replicates. Revenue and operational intervals use 1,000 bootstrap replicates combined with segment-level normal draws of the estimated elasticities. Only blocks present in the test data are sampled. The fitted predictors and chosen policy remain fixed, so these intervals do not propagate all model-fitting or policy-selection uncertainty. Venue-week resampling also treats those blocks as independent despite the simulator's shared daily temperature component; this assumption can understate uncertainty from common weather shocks.
+
+H1 requires lower Brier score and log-loss against every evaluated baseline at adjusted $p<0.05$, positive Brier skill, and a calibration-slope interval containing one. H2 requires a revenue interval with lower bound above zero; no agreed commercial implementation threshold is available. H3 requires a positive lower bound for off-peak occupancy and a cancellation-change upper bound below half the training weekly cancellation-rate standard deviation. These are simulation checks of the proposed criteria. The planned training-based minimum detectable revenue effect is not estimated because this pilot does not define an observed paired counterfactual revenue outcome; no power claim is made.
+
+\subsection{Additional analyses and remaining scope}
+Additional analyses compare estimated price effects with simulator derivatives, evaluate the chosen prices under the simulator's full booking and cancellation functions, vary elasticity by a common factor from 0.5 to 1.5, remove weather from LightGBM, and report errors by facility type and observed test season. The weather ablation reuses the selected LightGBM settings and all five seeds; it does not retune after inspecting test results.
+
+The proposed real-world difference-in-differences analysis, instruments and randomized pricing pilot are not performed: the supplied files contain no such interventions or experimental assignments. Leave-venue-out evaluation, a realized-weather upper-bound experiment and a separate price-derivative consistency study remain unimplemented. The synthetic setting, restricted tuning budget, limited neural training and absence of real market feedback constrain the scope of every reported result. Bibliographic records are retained from the supplied assignments; this work does not add an external literature search.
